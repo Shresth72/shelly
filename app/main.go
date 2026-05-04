@@ -30,14 +30,13 @@ func main() {
 func handleCommands(commands string) bool {
 	commands = strings.TrimSpace(commands)
 	commandsArr := strings.Split(commands, " ")
-
 	command := commandsArr[0]
 
 	switch command {
 	case "exit":
 		return true
 	case "echo":
-		handleEcho(commandsArr)
+		handleEcho(commandsArr[1:])
 	default:
 		fmt.Printf("%s: command not found\n", command)
 		return false
@@ -47,6 +46,6 @@ func handleCommands(commands string) bool {
 }
 
 func handleEcho(commands []string) {
-	cmdStr := strings.Join(commands[1:], " ")
+	cmdStr := strings.Join(commands, " ")
 	fmt.Printf("%s\n", cmdStr)
 }
