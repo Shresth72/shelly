@@ -7,20 +7,42 @@ import (
 	"strings"
 )
 
+type CommandType int
+
 var _ = fmt.Print
+
+const (
+	CmdUnknown CommandType = iota
+	CmdExit
+	CmdEcho
+	CmdType
+)
+
+func parseCommand(cmd string) CommandType {
+	switch cmd {
+	case "exit":
+		return CmdExit
+	case "echo":
+		return CmdEcho
+	case "type":
+		return CmdType
+	default:
+		return CmdUnknown
+	}
+}
 
 func main() {
 
 	reader := bufio.NewReader(os.Stdin)
 	for {
 		fmt.Print("$ ")
-		commands, err := reader.ReadString('\n')
+		input, err := reader.ReadString('\n')
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "Error reading line:", err)
 			os.Exit(1)
 		}
 
-		if handleCommands(commands) {
+		if handleCommands(input) {
 			break
 		}
 	}
@@ -28,24 +50,43 @@ func main() {
 }
 
 func handleCommands(commands string) bool {
-	commands = strings.TrimSpace(commands)
-	commandsArr := strings.Split(commands, " ")
-	command := commandsArr[0]
+	input := strings.TrimSpace(commands)
 
-	switch command {
-	case "exit":
+	parts := strings.Fields(input)
+	if len(parts) == 0 {
+		return false
+	}
+
+	command := parts[0]
+	cmdType := parseCommand(command)
+
+	switch cmdType {
+	case CmdExit:
 		return true
-	case "echo":
-		handleEcho(commandsArr[1:])
+	case CmdEcho:
+		handleEcho(parts[1:])
+	case CmdType:
+		handleType(parts[1:])
 	default:
 		fmt.Printf("%s: command not found\n", command)
 		return false
 	}
-
 	return false
 }
 
-func handleEcho(commands []string) {
-	cmdStr := strings.Join(commands, " ")
-	fmt.Printf("%s\n", cmdStr)
+func handleType(args []string) {
+	cmdStr := strings.Join(args, " ")
+
+	typeOf := parseCommand(cmdStr)
+	switch typeOf {
+	case CmdUnknown:
+		fmt.Printf("%s: not found\n", cmdStr)
+	default:
+		fmt.Printf("%s is a shell builtin\n", cmdStr)
+	}
+}
+
+func handleEcho(args []string) {
+	output := strings.Join(args, " ")
+	fmt.Printf("%s\n", output)
 }
