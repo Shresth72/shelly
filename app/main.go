@@ -130,23 +130,17 @@ func handleUnknownType(cmd string) {
 }
 
 func validateExecutable(command string) (string, bool) {
-	pathEnv := os.Getenv("PATH")
-	if pathEnv == "" {
+	path, err := exec.LookPath(command)
+	if err != nil {
 		return "", false
 	}
 
-	for _, dir := range strings.Split(pathEnv, ":") {
-		fullPath := dir + "/" + command
-
-		info, err := os.Stat(fullPath)
-		if err != nil {
-			continue
-		}
-
-		return fullPath, hasExecutePermission(info)
+	info, err := os.Stat(path)
+	if err != nil {
+		return "", false
 	}
 
-	return "", false
+	return path, hasExecutePermission(info)
 }
 
 func hasExecutePermission(info os.FileInfo) bool {
