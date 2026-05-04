@@ -104,7 +104,7 @@ func handleTypeCmd(ctx CommandContext) {
 }
 
 func handleUnknownCmd(ctx CommandContext) {
-	path, executable := validateExecutable(ctx.Name)
+	path, executable := findFirstExecutable(ctx.Name)
 
 	if path == "" {
 		fmt.Printf("%s: command not found\n", ctx.Name)
@@ -119,8 +119,7 @@ func handleUnknownCmd(ctx CommandContext) {
 }
 
 func handleUnknownType(cmd string) {
-	path, _ := validateExecutable(cmd)
-
+	path, _ := findFirstExecutable(cmd)
 	if path == "" {
 		fmt.Printf("%s: not found\n", cmd)
 		return
@@ -129,7 +128,7 @@ func handleUnknownType(cmd string) {
 	fmt.Printf("%s is %s\n", cmd, path)
 }
 
-func validateExecutable(command string) (string, bool) {
+func findFirstExecutable(command string) (string, bool) {
 	pathEnv := os.Getenv("PATH")
 	if pathEnv == "" {
 		return "", false
@@ -141,7 +140,6 @@ func validateExecutable(command string) (string, bool) {
 		}
 
 		fullPath := dir + "/" + command
-
 		info, err := os.Stat(fullPath)
 		if err != nil {
 			continue
@@ -155,28 +153,14 @@ func validateExecutable(command string) (string, bool) {
 	return "", false
 }
 
-// func validateExecutable(command string) (string, bool) {
-// 	path, err := exec.LookPath(command)
-// 	if err != nil {
-// 		return "", false
-// 	}
-//
-// 	info, err := os.Stat(path)
-// 	if err != nil {
-// 		return "", false
-// 	}
-//
-// 	return path, hasExecutePermission(info)
-// }
-
 func hasExecutePermission(info os.FileInfo) bool {
 	return info.Mode().Perm()&0111 != 0
 }
 
-func runExecutable(exe string, ctx CommandContext) {
-	cmd := exec.Command(exe, ctx.Args...)
+func runExecutable(path string, ctx CommandContext) {
+	cmd := exec.Command(ctx.Name, ctx.Args...)
 
-	cmd.Args = append([]string{ctx.Name}, ctx.Args...)
+	// cmd.Args = append([]string{ctx.Name}, ctx.Args...)
 
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
