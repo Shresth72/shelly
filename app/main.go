@@ -135,7 +135,7 @@ func validateExecutable(command string) (string, bool) {
 		return "", false
 	}
 
-	for dir := range strings.SplitSeq(pathEnv, ":") {
+	for _, dir := range strings.Split(pathEnv, ":") {
 		fullPath := dir + "/" + command
 
 		info, err := os.Stat(fullPath)
