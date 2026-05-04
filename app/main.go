@@ -158,6 +158,8 @@ func hasExecutePermission(info os.FileInfo) bool {
 func runExecutable(exe string, ctx CommandContext) {
 	cmd := exec.Command(exe, ctx.Args...)
 
+	cmd.Args = append([]string{ctx.Name}, ctx.Args...)
+
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
