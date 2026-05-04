@@ -20,19 +20,21 @@ func main() {
 			os.Exit(1)
 		}
 
-		handleCommands(command)
+		if handleCommands(command) {
+			break
+		}
 	}
 
 }
 
-func handleCommands(command string) {
+func handleCommands(command string) bool {
 	command = strings.TrimSpace(command)
 
 	switch command {
 	case "exit":
-		os.Exit(1)
+		return true
 	default:
 		fmt.Printf("%s: command not found\n", command)
+		return false
 	}
-
 }
