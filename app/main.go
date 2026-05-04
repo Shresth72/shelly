@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 )
 
 var _ = fmt.Print
@@ -25,11 +26,13 @@ func main() {
 }
 
 func handleCommands(command string) {
+	command = strings.TrimSpace(command)
+
 	switch command {
 	case "exit":
 		os.Exit(1)
 	default:
-		fmt.Printf("%s: command not found\n", command[:len(command)-1])
+		fmt.Printf("%s: command not found\n", command)
 	}
 
 }
