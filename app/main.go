@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
 	"strings"
 )
 
@@ -22,10 +23,6 @@ type CommandContext struct {
 	CmdStr string
 }
 
-func (c CommandContext) isBuiltin() bool {
-	return parseCommand(c.Name) != CmdUnknown
-}
-
 func parseCommand(cmd string) CommandType {
 	switch cmd {
 	case "exit":
@@ -40,8 +37,8 @@ func parseCommand(cmd string) CommandType {
 }
 
 func main() {
-
 	reader := bufio.NewReader(os.Stdin)
+
 	for {
 		fmt.Print("$ ")
 		input, err := reader.ReadString('\n')
@@ -54,7 +51,6 @@ func main() {
 			break
 		}
 	}
-
 }
 
 func handleCommands(commands string) bool {
@@ -70,58 +66,104 @@ func handleCommands(commands string) bool {
 		Args:   parts[1:],
 		CmdStr: strings.Join(parts[1:], " "),
 	}
+
 	cmdType := parseCommand(ctx.Name)
 
 	switch cmdType {
 	case CmdExit:
 		return true
 	case CmdEcho:
-		handleEcho(ctx)
+		handleEchoCmd(ctx)
 	case CmdType:
-		handleType(ctx)
+		handleTypeCmd(ctx)
 	default:
-		fmt.Printf("%s: command not found\n", ctx.Name)
-		return false
+		handleUnknownCmd(ctx)
 	}
+
 	return false
 }
 
-func handleEcho(ctx CommandContext) {
+func handleEchoCmd(ctx CommandContext) {
 	fmt.Println(ctx.CmdStr)
 }
 
-func handleType(ctx CommandContext) {
-	target := ctx.CmdStr
+func handleTypeCmd(ctx CommandContext) {
+	if len(ctx.Args) == 0 {
+		return
+	}
+
+	target := ctx.Args[0]
 
 	typeOf := parseCommand(target)
 	switch typeOf {
 	case CmdUnknown:
-		handleUnknownTypeOf(ctx)
+		handleUnknownType(target)
 	default:
 		fmt.Printf("%s is a shell builtin\n", target)
 	}
 }
 
-func handleUnknownTypeOf(ctx CommandContext) {
-	if validatePathExecutable(ctx) {
+func handleUnknownCmd(ctx CommandContext) {
+	path, executable := validateExecutable(ctx.Name)
+
+	if path == "" {
+		fmt.Printf("%s: command not found\n", ctx.Name)
 		return
 	}
-	fmt.Printf("%s: not found\n", ctx.CmdStr)
+
+	if !executable {
+		fmt.Println("Permission Denied")
+		return
+	}
+	runExecutable(path, ctx)
 }
 
-func validatePathExecutable(ctx CommandContext) bool {
-	path := os.Getenv("PATH")
-	if len(path) == 0 {
-		return false
+func handleUnknownType(cmd string) {
+	path, executable := validateExecutable(cmd)
+
+	if path == "" {
+		fmt.Printf("%s: not found\n", cmd)
+		return
 	}
 
-	for dir := range strings.SplitSeq(path, ":") {
-		fullPath := dir + "/" + ctx.CmdStr
-		info, err := os.Stat(fullPath)
-		if err == nil && info.Mode().Perm()&0111 != 0 {
-			fmt.Printf("%s is %s\n", ctx.CmdStr, fullPath)
-			return true
-		}
+	if executable {
+		fmt.Printf("%s is %s\n", cmd, path)
 	}
-	return false
+}
+
+func validateExecutable(command string) (string, bool) {
+	pathEnv := os.Getenv("PATH")
+	if pathEnv == "" {
+		return "", false
+	}
+
+	for dir := range strings.SplitSeq(pathEnv, ":") {
+		fullPath := dir + "/" + command
+
+		info, err := os.Stat(fullPath)
+		if err != nil {
+			continue
+		}
+
+		return fullPath, hasExecutePermission(info)
+	}
+
+	return "", false
+}
+
+func hasExecutePermission(info os.FileInfo) bool {
+	return info.Mode().Perm()&0111 != 0
+}
+
+func runExecutable(exe string, ctx CommandContext) {
+	cmd := exec.Command(exe, ctx.Args...)
+
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	err := cmd.Run()
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
 }
