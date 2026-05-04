@@ -9,14 +9,22 @@ import (
 
 type CommandType int
 
-var _ = fmt.Print
-
 const (
 	CmdUnknown CommandType = iota
 	CmdExit
 	CmdEcho
 	CmdType
 )
+
+type CommandContext struct {
+	Name   string
+	Args   []string
+	CmdStr string
+}
+
+func (c CommandContext) isBuiltin() bool {
+	return parseCommand(c.Name) != CmdUnknown
+}
 
 func parseCommand(cmd string) CommandType {
 	switch cmd {
@@ -57,36 +65,63 @@ func handleCommands(commands string) bool {
 		return false
 	}
 
-	command := parts[0]
-	cmdType := parseCommand(command)
+	ctx := CommandContext{
+		Name:   parts[0],
+		Args:   parts[1:],
+		CmdStr: strings.Join(parts[1:], " "),
+	}
+	cmdType := parseCommand(ctx.Name)
 
 	switch cmdType {
 	case CmdExit:
 		return true
 	case CmdEcho:
-		handleEcho(parts[1:])
+		handleEcho(ctx)
 	case CmdType:
-		handleType(parts[1:])
+		handleType(ctx)
 	default:
-		fmt.Printf("%s: command not found\n", command)
+		fmt.Printf("%s: command not found\n", ctx.Name)
 		return false
 	}
 	return false
 }
 
-func handleType(args []string) {
-	cmdStr := strings.Join(args, " ")
+func handleEcho(ctx CommandContext) {
+	fmt.Println(ctx.CmdStr)
+}
 
-	typeOf := parseCommand(cmdStr)
+func handleType(ctx CommandContext) {
+	target := ctx.CmdStr
+
+	typeOf := parseCommand(target)
 	switch typeOf {
 	case CmdUnknown:
-		fmt.Printf("%s: not found\n", cmdStr)
+		handleUnknownTypeOf(ctx)
 	default:
-		fmt.Printf("%s is a shell builtin\n", cmdStr)
+		fmt.Printf("%s is a shell builtin\n", target)
 	}
 }
 
-func handleEcho(args []string) {
-	output := strings.Join(args, " ")
-	fmt.Printf("%s\n", output)
+func handleUnknownTypeOf(ctx CommandContext) {
+	if validatePathExecutable(ctx) {
+		return
+	}
+	fmt.Printf("%s: not found\n", ctx.CmdStr)
+}
+
+func validatePathExecutable(ctx CommandContext) bool {
+	path := os.Getenv("PATH")
+	if len(path) == 0 {
+		return false
+	}
+
+	for dir := range strings.SplitSeq(path, ":") {
+		fullPath := dir + "/" + ctx.CmdStr
+		info, err := os.Stat(fullPath)
+		if err == nil && info.Mode().Perm()&0111 != 0 {
+			fmt.Printf("%s is %s\n", ctx.CmdStr, fullPath)
+			return true
+		}
+	}
+	return false
 }
