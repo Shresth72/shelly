@@ -119,16 +119,14 @@ func handleUnknownCmd(ctx CommandContext) {
 }
 
 func handleUnknownType(cmd string) {
-	path, executable := validateExecutable(cmd)
+	path, _ := validateExecutable(cmd)
 
 	if path == "" {
 		fmt.Printf("%s: not found\n", cmd)
 		return
 	}
 
-	if executable {
-		fmt.Printf("%s is %s\n", cmd, path)
-	}
+	fmt.Printf("%s is %s\n", cmd, path)
 }
 
 func validateExecutable(command string) (string, bool) {
