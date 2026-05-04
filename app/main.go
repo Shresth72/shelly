@@ -18,6 +18,17 @@ func main() {
 			fmt.Fprintln(os.Stderr, "Error reading line:", err)
 			os.Exit(1)
 		}
+
+		handleCommands(command)
+	}
+
+}
+
+func handleCommands(command string) {
+	switch command {
+	case "exit":
+		os.Exit(1)
+	default:
 		fmt.Printf("%s: command not found\n", command[:len(command)-1])
 	}
 
