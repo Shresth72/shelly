@@ -26,9 +26,33 @@ func handlePwd(ctx CommandContext) bool {
 	return false
 }
 
+func handleCd(ctx CommandContext) bool {
+	if len(ctx.Args) > 1 {
+		fmt.Println("cd: too many arguments")
+		return false
+	}
+
+	var target string
+
+	if len(ctx.Args) == 0 {
+		target = os.Getenv("HOME")
+		if target == "" {
+			fmt.Println("cd: HOME not set")
+			return false
+		}
+	}
+
+	target = ctx.Args[0]
+	err := os.Chdir(target)
+	if err != nil {
+		fmt.Printf("cd: %s: No such file or directory\n", target)
+	}
+
+	return false
+}
+
 func handleType(ctx CommandContext) bool {
 	if len(ctx.Args) == 0 {
-		fmt.Println("type: missing argument")
 		return false
 	}
 

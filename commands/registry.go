@@ -20,6 +20,7 @@ func init() {
 		"exit": handleExit,
 		"type": handleType,
 		"pwd":  handlePwd,
+		"cd":   handleCd,
 	}
 }
 
