@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/codecrafters-io/shell-starter-go/internal/utils"
 )
@@ -40,9 +41,20 @@ func handleCd(ctx CommandContext) bool {
 			fmt.Println("cd: HOME not set")
 			return false
 		}
+	} else {
+		target = ctx.Args[0]
 	}
 
-	target = ctx.Args[0]
+	if target == "~" || strings.HasPrefix(target, "~/") {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			fmt.Println("cd: unable to determine home directory")
+			return false
+		}
+
+		target = strings.Replace(target, "~", home, 1)
+	}
+
 	err := os.Chdir(target)
 	if err != nil {
 		fmt.Printf("cd: %s: No such file or directory\n", target)
