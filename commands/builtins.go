@@ -28,21 +28,26 @@ func handlePwd(ctx CommandContext) bool {
 
 func handleType(ctx CommandContext) bool {
 	if len(ctx.Args) == 0 {
+		fmt.Println("type: missing argument")
 		return false
 	}
 
-	target := ctx.Args[0]
-	if _, ok := commands[target]; ok {
-		fmt.Printf("%s is a shell builtin\n", target)
-		return false
+	for _, target := range ctx.Args {
+		// Builtin
+		if _, ok := commands[target]; ok {
+			fmt.Printf("%s is a shell builtin\n", target)
+			continue
+		}
+
+		// External
+		path, _ := utils.FindExecutable(target)
+		if path == "" {
+			fmt.Printf("%s: not found\n", target)
+			continue
+		}
+
+		fmt.Printf("%s is %s\n", target, path)
 	}
 
-	path, _ := utils.FindExecutable(target)
-	if path == "" {
-		fmt.Printf("%s: not found\n", target)
-		return false
-	}
-
-	fmt.Printf("%s is %s\n", target, path)
 	return false
 }
