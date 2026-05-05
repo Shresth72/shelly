@@ -44,9 +44,9 @@ func Tokenize(input string) []string {
 				if current.Len() > 0 {
 					result = append(result, current.String())
 					current.Reset()
-				} else {
-					current.WriteByte(ch)
 				}
+			} else {
+				current.WriteByte(ch)
 			}
 
 		// case '\\':
