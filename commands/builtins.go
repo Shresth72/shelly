@@ -27,6 +27,31 @@ func handlePwd(ctx CommandContext) bool {
 	return false
 }
 
+func handleType(ctx CommandContext) bool {
+	if len(ctx.Args) == 0 {
+		return false
+	}
+
+	for _, target := range ctx.Args {
+		// Builtin
+		if _, ok := commands[target]; ok {
+			fmt.Printf("%s is a shell builtin\n", target)
+			continue
+		}
+
+		// External
+		path, _ := utils.FindExecutable(target)
+		if path == "" {
+			fmt.Printf("%s: not found\n", target)
+			continue
+		}
+
+		fmt.Printf("%s is %s\n", target, path)
+	}
+
+	return false
+}
+
 func handleCd(ctx CommandContext) bool {
 	if len(ctx.Args) > 1 {
 		fmt.Println("cd: too many arguments")
@@ -58,31 +83,6 @@ func handleCd(ctx CommandContext) bool {
 	err := os.Chdir(target)
 	if err != nil {
 		fmt.Printf("cd: %s: No such file or directory\n", target)
-	}
-
-	return false
-}
-
-func handleType(ctx CommandContext) bool {
-	if len(ctx.Args) == 0 {
-		return false
-	}
-
-	for _, target := range ctx.Args {
-		// Builtin
-		if _, ok := commands[target]; ok {
-			fmt.Printf("%s is a shell builtin\n", target)
-			continue
-		}
-
-		// External
-		path, _ := utils.FindExecutable(target)
-		if path == "" {
-			fmt.Printf("%s: not found\n", target)
-			continue
-		}
-
-		fmt.Printf("%s is %s\n", target, path)
 	}
 
 	return false

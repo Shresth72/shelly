@@ -2,6 +2,8 @@ package commands
 
 import (
 	"strings"
+
+	"github.com/codecrafters-io/shell-starter-go/internal/utils"
 )
 
 type CommandContext struct {
@@ -28,7 +30,7 @@ func init() {
 func HandleCommands(input string) bool {
 	input = strings.TrimSpace(input)
 
-	parts := strings.Fields(input)
+	parts := utils.Tokenize(input)
 	if len(parts) == 0 {
 		return false
 	}
