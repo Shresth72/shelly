@@ -49,6 +49,13 @@ func Tokenize(input string) []string {
 				}
 			}
 
+		// case '\\':
+		// 	if state == double {
+		// 		if state != escape {
+		// 			state = escape
+		// 		} else if state
+		// 	}
+
 		default:
 			current.WriteByte(ch)
 		}
