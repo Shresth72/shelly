@@ -1,0 +1,48 @@
+package commands
+
+import (
+	"fmt"
+	"os"
+
+	"github.com/codecrafters-io/shell-starter-go/internal/utils"
+)
+
+func handleExit(ctx CommandContext) bool {
+	return true
+}
+
+func handleEcho(ctx CommandContext) bool {
+	fmt.Println(ctx.CmdStr)
+	return false
+}
+
+func handlePwd(ctx CommandContext) bool {
+	dir, err := os.Getwd()
+	if err != nil {
+		fmt.Println("Error:", err)
+		return false
+	}
+	fmt.Println(dir)
+	return false
+}
+
+func handleType(ctx CommandContext) bool {
+	if len(ctx.Args) == 0 {
+		return false
+	}
+
+	target := ctx.Args[0]
+	if _, ok := commands[target]; ok {
+		fmt.Printf("%s is a shell builtin\n", target)
+		return false
+	}
+
+	path, _ := utils.FindExecutable(target)
+	if path == "" {
+		fmt.Printf("%s: not found\n", target)
+		return false
+	}
+
+	fmt.Printf("%s is %s\n", target, path)
+	return false
+}
