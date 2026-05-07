@@ -39,12 +39,11 @@ func Tokenize(input string) []string {
 			escaped = true
 
 		case '"', '\'':
-			switch quote {
-			case 0:
+			if quote == 0 {
 				quote = ch
-			case ch:
+			} else if quote == ch {
 				quote = 0
-			default:
+			} else {
 				current.WriteByte(ch)
 			}
 
