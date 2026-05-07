@@ -30,17 +30,19 @@ func parseRedirects(
 
 		switch part {
 		case ">", "1>":
-			if i+1 >= len(parts) {
-				return nil, fmt.Errorf("missing redirect target")
-			}
-
-			file, err := os.Create(parts[i+1])
+			file, err := openRedirectFile(parts, i, &files)
 			if err != nil {
 				return nil, err
 			}
-
 			r.Stdout = file
-			files = append(files, file)
+			i++
+
+		case "2>":
+			file, err := openRedirectFile(parts, i, &files)
+			if err != nil {
+				return nil, err
+			}
+			r.Stderr = file
 			i++
 
 		default:
@@ -56,4 +58,22 @@ func parseRedirects(
 	}
 
 	return r, nil
+}
+
+func openRedirectFile(
+	parts []string,
+	i int,
+	files *[]*os.File,
+) (*os.File, error) {
+	if i+1 >= len(parts) {
+		return nil, fmt.Errorf("missing redirect target")
+	}
+
+	file, err := os.Create(parts[i+1])
+	if err != nil {
+		return nil, err
+	}
+
+	*files = append(*files, file)
+	return file, nil
 }
