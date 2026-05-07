@@ -30,6 +30,9 @@ func runExecutable(ctx CommandContext) {
 
 	err := cmd.Run()
 	if err != nil {
+		if _, ok := err.(*exec.ExitError); ok {
+			return
+		}
 		fmt.Fprintln(ctx.Stderr, "Error:", err)
 	}
 }
