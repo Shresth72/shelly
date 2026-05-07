@@ -9,14 +9,18 @@ import (
 )
 
 type CommandContext struct {
+	// Command
 	Name   string
 	Args   []string
 	CmdStr string
 
+	// Context
 	Stdin  io.Reader
 	Stdout io.Writer
 	Stderr io.Writer
 }
+
+// Pipe - Type of Node with just Left/Right (Node type as well)
 
 type CommandHandler func(ctx CommandContext) bool
 

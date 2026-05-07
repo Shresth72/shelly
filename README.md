@@ -32,3 +32,20 @@ Note: This section is for stages 2 and beyond.
    `app/main.go`.
 1. Run `codecrafters submit` to submit your solution to CodeCrafters. Test
    output will be streamed to your terminal.
+
+# Architecture (Todo: Convert this into this slowly)
+```
+input
+ ↓
+tokenizer
+ ↓
+parser
+ ↓
+AST (Nodes: Command, Pipe)
+ ↓
+executor
+    ↓
+pipe executor
+    ↓
+recursive Execute()
+```
