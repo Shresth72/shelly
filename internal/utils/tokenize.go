@@ -37,13 +37,6 @@ func Tokenize(input string) []string {
 		switch ch {
 		case '\\':
 			escaped = true
-			if quote == 0 {
-				quote = ch
-			} else if quote == ch {
-				quote = 0
-			} else {
-				current.WriteByte(ch)
-			}
 
 		case '"', '\'':
 			if quote == 0 {
