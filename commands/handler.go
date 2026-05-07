@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"fmt"
+	"io"
 	"strings"
 
 	"github.com/codecrafters-io/shell-starter-go/internal/utils"
@@ -10,6 +12,10 @@ type CommandContext struct {
 	Name   string
 	Args   []string
 	CmdStr string
+
+	Stdin  io.Reader
+	Stdout io.Writer
+	Stderr io.Writer
 }
 
 type CommandHandler func(ctx CommandContext) bool
@@ -27,7 +33,11 @@ func init() {
 }
 
 // TODO: Pass Reader/Writer to handler
-func HandleCommands(input string) bool {
+func HandleCommands(
+	input string,
+	stdin io.Reader,
+	stdout, stderr io.Writer,
+) bool {
 	input = strings.TrimSpace(input)
 
 	parts := utils.Tokenize(input)
@@ -35,10 +45,23 @@ func HandleCommands(input string) bool {
 		return false
 	}
 
+	redirects, err := parseRedirects(parts, stdout, stderr)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return false
+	}
+	defer redirects.Close()
+
+	parts = redirects.Args
+
 	ctx := CommandContext{
 		Name:   parts[0],
 		Args:   parts[1:],
 		CmdStr: strings.Join(parts[1:], " "),
+
+		Stdin:  stdin,
+		Stdout: redirects.Stdout,
+		Stderr: redirects.Stderr,
 	}
 
 	if handler, ok := commands[ctx.Name]; ok {

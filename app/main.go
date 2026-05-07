@@ -19,7 +19,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		if commands.HandleCommands(input) {
+		if commands.HandleCommands(input, os.Stdin, os.Stdout, os.Stderr) {
 			break
 		}
 	}
