@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/chzyer/readline"
+	"github.com/codecrafters-io/shell-starter-go/internal/utils"
 )
 
 type BellCompleter struct {
@@ -21,9 +22,13 @@ func (c *BellCompleter) Do(line []rune, pos int) ([][]rune, int) {
 }
 
 func NewAutoCompleter() *BellCompleter {
-	items := make([]readline.PrefixCompleterInterface, 0, len(allCommands))
+	items := make([]readline.PrefixCompleterInterface, 0)
 
-	for _, command := range allCommands {
+	for _, command := range builtinCommands {
+		items = append(items, readline.PcItem(command))
+	}
+
+	for _, command := range utils.Executables() {
 		items = append(items, readline.PcItem(command))
 	}
 

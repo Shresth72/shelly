@@ -3,6 +3,7 @@ package utils
 import (
 	"os"
 	"strings"
+	"sync"
 )
 
 func FindExecutable(command string) (string, bool) {
@@ -28,6 +29,57 @@ func FindExecutable(command string) (string, bool) {
 	}
 
 	return "", false
+}
+
+func Executables() []string {
+	pathEnv := os.Getenv("PATH")
+
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+
+	var commands []string
+
+	for dir := range strings.SplitSeq(pathEnv, ":") {
+		if dir == "" {
+			dir = "."
+		}
+
+		wg.Add(1)
+
+		go func(dir string) {
+			defer wg.Done()
+
+			entries, err := os.ReadDir(dir)
+			if err != nil {
+				return
+			}
+
+			var found []string
+
+			for _, entry := range entries {
+				if entry.IsDir() {
+					continue
+				}
+
+				info, err := entry.Info()
+				if err != nil {
+					continue
+				}
+
+				if hasExecutePermission(info) {
+					found = append(found, entry.Name())
+				}
+			}
+
+			mu.Lock()
+			commands = append(commands, found...)
+			mu.Unlock()
+		}(dir)
+	}
+
+	wg.Wait()
+
+	return commands
 }
 
 func hasExecutePermission(info os.FileInfo) bool {

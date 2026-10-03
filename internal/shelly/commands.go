@@ -6,7 +6,7 @@ import (
 
 var ErrExit = errors.New("shell exit")
 
-var allCommands = []string{
+var builtinCommands = []string{
 	"echo",
 	"pwd",
 	"type",
@@ -15,7 +15,7 @@ var allCommands = []string{
 }
 
 func isBuiltin(name string) bool {
-	for _, cmd := range allCommands {
+	for _, cmd := range builtinCommands {
 		if cmd == name {
 			return true
 		}
