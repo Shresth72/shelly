@@ -1,6 +1,7 @@
 package shelly
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -30,6 +31,9 @@ func HandleInput(
 	}
 
 	exit, err := ExecuteAST(ast, sh)
+	if errors.Is(err, ErrExit) {
+		return true
+	}
 	if err != nil {
 		fmt.Fprintln(sh.Stderr, err)
 		return false
