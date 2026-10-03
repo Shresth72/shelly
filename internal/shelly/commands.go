@@ -12,7 +12,6 @@ var allCommands = []string{
 	"type",
 	"cd",
 	"exit",
-	"cat",
 }
 
 func isBuiltin(name string) bool {
