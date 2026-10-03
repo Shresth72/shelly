@@ -2,7 +2,6 @@ package shelly
 
 import (
 	"errors"
-	"fmt"
 )
 
 var ErrExit = errors.New("shell exit")
