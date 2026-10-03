@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-type Context struct {
+type Shell struct {
 	Stdin  io.Reader
 	Stdout io.Writer
 	Stderr io.Writer
@@ -14,8 +14,7 @@ type Context struct {
 
 func HandleInput(
 	input string,
-	stdin io.Reader,
-	stdout, stderr io.Writer,
+	sh *Shell,
 ) bool {
 	input = strings.TrimSpace(input)
 
@@ -26,13 +25,13 @@ func HandleInput(
 
 	ast, err := ParseAST(parts)
 	if err != nil {
-		fmt.Fprintln(stderr, err)
+		fmt.Fprintln(sh.Stderr, err)
 		return false
 	}
 
-	exit, err := ExecuteAST(ast)
+	exit, err := ExecuteAST(ast, sh)
 	if err != nil {
-		fmt.Fprintln(stderr, err)
+		fmt.Fprintln(sh.Stderr, err)
 		return false
 	}
 

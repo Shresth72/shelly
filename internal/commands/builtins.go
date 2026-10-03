@@ -8,13 +8,11 @@ import (
 	"github.com/codecrafters-io/shell-starter-go/internal/utils"
 )
 
-// TODO: Pass Command and make these just return what they want to print
-// And try to achieve only Command as the thing have access to
-func handleExit(ctx CommandContext) bool {
+func exit(ctx CommandContext) bool {
 	return true
 }
 
-func handleEcho(ctx CommandContext) bool {
+func echo(cmd *Command, ctx *Context) bool {
 	fmt.Fprintln(ctx.Stdout, ctx.CmdStr)
 	return false
 }
