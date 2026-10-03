@@ -1,27 +1,33 @@
 package shelly
 
-import "github.com/chzyer/readline"
+import (
+	"fmt"
 
-func NewAutoCompleter() *readline.PrefixCompleter {
-	items := make([]*readline.PrefixCompleter, 0, len(allCommands))
+	"github.com/chzyer/readline"
+)
+
+type BellCompleter struct {
+	*readline.PrefixCompleter
+}
+
+func (c *BellCompleter) Do(line []rune, pos int) ([][]rune, int) {
+	newLine, length := c.PrefixCompleter.Do(line, pos)
+
+	if len(newLine) == 0 {
+		fmt.Print("\a")
+	}
+
+	return newLine, length
+}
+
+func NewAutoCompleter() *BellCompleter {
+	items := make([]readline.PrefixCompleterInterface, 0, len(allCommands))
 
 	for _, command := range allCommands {
 		items = append(items, readline.PcItem(command))
 	}
 
-	return readline.NewPrefixCompleter(
-		convertToInterfaces(items)...,
-	)
-}
-
-func convertToInterfaces(
-	items []*readline.PrefixCompleter,
-) []readline.PrefixCompleterInterface {
-	result := make([]readline.PrefixCompleterInterface, len(items))
-
-	for i, item := range items {
-		result[i] = item
+	return &BellCompleter{
+		PrefixCompleter: readline.NewPrefixCompleter(items...),
 	}
-
-	return result
 }
