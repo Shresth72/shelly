@@ -6,6 +6,10 @@ import (
 	"sync"
 )
 
+func hasExecutePermission(info os.FileInfo) bool {
+	return info.Mode().Perm()&0111 != 0
+}
+
 func FindExecutable(command string) (string, bool) {
 	pathEnv := os.Getenv("PATH")
 	if pathEnv == "" {
@@ -31,15 +35,57 @@ func FindExecutable(command string) (string, bool) {
 	return "", false
 }
 
-func Executables() []string {
-	pathEnv := os.Getenv("PATH")
-
-	var wg sync.WaitGroup
-	var mu sync.Mutex
+func executableNames(dir, prefix string) []string {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil
+	}
 
 	var commands []string
 
-	for dir := range strings.SplitSeq(pathEnv, ":") {
+	for _, entry := range entries {
+		name := entry.Name()
+
+		if entry.IsDir() || !strings.HasPrefix(name, prefix) {
+			continue
+		}
+
+		info, err := entry.Info()
+		if err != nil {
+			continue
+		}
+
+		if hasExecutePermission(info) {
+			commands = append(commands, name)
+		}
+	}
+
+	return commands
+}
+
+func CompleteExecutables(prefix string) []string {
+	commands := make(map[string]struct{})
+
+	for dir := range strings.SplitSeq(os.Getenv("PATH"), ":") {
+		if dir == "" {
+			dir = "."
+		}
+
+		for _, name := range executableNames(dir, prefix) {
+			commands[name] = struct{}{}
+		}
+	}
+
+	return mapKeys(commands)
+}
+
+func Executables() []string {
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+
+	commands := make(map[string]struct{})
+
+	for dir := range strings.SplitSeq(os.Getenv("PATH"), ":") {
 		if dir == "" {
 			dir = "."
 		}
@@ -49,39 +95,27 @@ func Executables() []string {
 		go func(dir string) {
 			defer wg.Done()
 
-			entries, err := os.ReadDir(dir)
-			if err != nil {
-				return
-			}
-
-			var found []string
-
-			for _, entry := range entries {
-				if entry.IsDir() {
-					continue
-				}
-
-				info, err := entry.Info()
-				if err != nil {
-					continue
-				}
-
-				if hasExecutePermission(info) {
-					found = append(found, entry.Name())
-				}
-			}
+			found := executableNames(dir, "")
 
 			mu.Lock()
-			commands = append(commands, found...)
+			for _, name := range found {
+				commands[name] = struct{}{}
+			}
 			mu.Unlock()
 		}(dir)
 	}
 
 	wg.Wait()
 
-	return commands
+	return mapKeys(commands)
 }
 
-func hasExecutePermission(info os.FileInfo) bool {
-	return info.Mode().Perm()&0111 != 0
+func mapKeys(set map[string]struct{}) []string {
+	result := make([]string, 0, len(set))
+
+	for name := range set {
+		result = append(result, name)
+	}
+
+	return result
 }
