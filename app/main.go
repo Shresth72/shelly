@@ -13,12 +13,15 @@ import (
 
 func main() {
 	autoCompleter := shelly.NewAutoCompleter()
+
 	rl, err := readline.NewEx(&readline.Config{
-		Prompt:          "$ ",
-		AutoComplete:    autoCompleter,
-		InterruptPrompt: "^C",
-		EOFPrompt:       "exit",
-		HistoryFile:     "/tmp/shelly_history",
+		Prompt:              "$ ",
+		AutoComplete:        autoCompleter,
+		FuncFilterInputRune: autoCompleter.InputFilter,
+		Listener:            &shelly.InputListener{},
+		InterruptPrompt:     "^C",
+		EOFPrompt:           "exit",
+		HistoryFile:         "/tmp/shelly_history",
 	})
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error creating readline:", err)
@@ -48,6 +51,7 @@ func main() {
 			continue
 		}
 		if err == io.EOF {
+			autoCompleter.Reset()
 			break
 		}
 		if err != nil {

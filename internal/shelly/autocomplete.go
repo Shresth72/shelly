@@ -2,6 +2,7 @@ package shelly
 
 import (
 	"fmt"
+	"os"
 	"sort"
 	"sync"
 
@@ -16,6 +17,19 @@ type BellCompleter struct {
 	ready     bool
 
 	belled bool
+}
+
+type InputListener struct {
+	readline.Listener
+}
+
+func (l *InputListener) OnChange(line []rune, pos int, key rune) ([]rune, int, bool) {
+	if key == readline.CharDelete {
+		fmt.Println()
+		os.Exit(0)
+	}
+
+	return line, pos, false
 }
 
 func NewAutoCompleter() *BellCompleter {
@@ -48,7 +62,6 @@ func (c *BellCompleter) Do(line []rune, pos int) ([][]rune, int) {
 
 	if !c.belled {
 		c.belled = true
-
 		fmt.Print("\x07")
 		return nil, 0
 	}
@@ -63,6 +76,18 @@ func (c *BellCompleter) Do(line []rune, pos int) ([][]rune, int) {
 	}
 
 	return completer.Do(line, pos)
+}
+
+func (c *BellCompleter) InputFilter(r rune) (rune, bool) {
+	return r, true
+}
+
+func (c *BellCompleter) InputListener(line []rune, pos int, key rune) ([]rune, int, bool) {
+	if key == 4 {
+		fmt.Println()
+		return nil, 0, true
+	}
+	return line, pos, false
 }
 
 func (c *BellCompleter) Reset() {
