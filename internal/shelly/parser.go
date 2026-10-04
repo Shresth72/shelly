@@ -12,7 +12,11 @@ func ParseAST(parts []string) (Node, error) {
 			continue
 		}
 
-		if i == 0 || i == len(parts)-1 {
+		if i == len(parts)-1 {
+			return nil, ErrIncomplete
+		}
+
+		if i == 0 {
 			return nil, fmt.Errorf("Invalid Pipe")
 		}
 

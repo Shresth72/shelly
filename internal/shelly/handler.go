@@ -16,28 +16,31 @@ type Shell struct {
 func HandleInput(
 	input string,
 	sh *Shell,
-) bool {
+) (bool, error) {
 	input = strings.TrimSpace(input)
 
-	parts := Tokenize(input)
+	parts, err := Tokenize(input)
+	if err != nil {
+		return false, err
+	}
 	if len(parts) == 0 {
-		return false
+		return false, nil
 	}
 
 	ast, err := ParseAST(parts)
 	if err != nil {
 		fmt.Fprintln(sh.Stderr, err)
-		return false
+		return false, err
 	}
 
 	exit, err := ExecuteAST(ast, sh)
 	if errors.Is(err, ErrExit) {
-		return true
+		return true, nil
 	}
 	if err != nil {
 		fmt.Fprintln(sh.Stderr, err)
-		return false
+		return false, err
 	}
 
-	return exit
+	return exit, nil
 }

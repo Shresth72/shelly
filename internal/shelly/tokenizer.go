@@ -1,27 +1,33 @@
 package shelly
 
-import "strings"
+import (
+	"errors"
+	"strings"
+)
 
 type quoteState int
+
+var ErrIncomplete = errors.New("shell incomplete")
 
 const (
 	none quoteState = iota
 	single
 	double
-	escape
 )
 
-func Tokenize(input string) []string {
+func Tokenize(input string) ([]string, error) {
 	var tokens []string
 	var current strings.Builder
 
-	var quote byte
+	var quote quoteState
 	escaped := false
+	tokenStarted := false
 
 	flush := func() {
-		if current.Len() > 0 {
+		if tokenStarted {
 			tokens = append(tokens, current.String())
 			current.Reset()
+			tokenStarted = false
 		}
 	}
 
@@ -31,39 +37,58 @@ func Tokenize(input string) []string {
 		if escaped {
 			current.WriteByte(ch)
 			escaped = false
+			tokenStarted = true
 			continue
 		}
 
-		switch ch {
-		case '\\':
-			if quote == '\'' {
-				current.WriteByte(ch)
-			} else {
-				escaped = true
-			}
-
-		case '"', '\'':
-			if quote == 0 {
-				quote = ch
-			} else if quote == ch {
-				quote = 0
-			} else {
-				current.WriteByte(ch)
-			}
-
-		case ' ', '\t', '\n':
-			if quote != 0 {
-				current.WriteByte(ch)
-			} else {
-				flush()
-			}
-
-		default:
-			current.WriteByte(ch)
+		if ch == '\\' && quote != single {
+			escaped = true
+			tokenStarted = true
+			continue
 		}
+
+		if ch == '\'' || ch == '"' {
+			if quote == none {
+				if ch == '\'' {
+					quote = single
+				} else {
+					quote = double
+				}
+				tokenStarted = true
+			} else if (quote == single && ch == '\'') || (quote == double && ch == '"') {
+				quote = none
+			} else {
+				current.WriteByte(ch)
+			}
+			continue
+		}
+
+		if quote == none {
+			switch ch {
+			case ' ', '\t', '\n':
+				flush()
+				continue
+
+			case '|', '<', '>':
+				flush()
+				if ch == '>' && i+1 < len(input) && input[i+1] == '>' {
+					tokens = append(tokens, ">>")
+					i++
+				} else {
+					tokens = append(tokens, string(ch))
+				}
+				continue
+			}
+		}
+
+		current.WriteByte(ch)
+		tokenStarted = true
+	}
+
+	if escaped || quote != none {
+		return nil, ErrIncomplete
 	}
 
 	flush()
-
-	return tokens
+	return tokens, nil
 }

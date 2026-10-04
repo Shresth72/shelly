@@ -1,9 +1,11 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/chzyer/readline"
 	"github.com/codecrafters-io/shell-starter-go/internal/shelly"
@@ -29,24 +31,43 @@ func main() {
 		Stderr: os.Stderr,
 	}
 
-	for {
-		input, err := rl.Readline()
+	var input strings.Builder
 
+	for {
+		if input.Len() > 0 {
+			rl.SetPrompt("> ")
+		} else {
+			rl.SetPrompt("$ ")
+		}
+
+		line, err := rl.Readline()
 		if err == readline.ErrInterrupt {
+			input.Reset()
 			continue
 		}
 		if err == io.EOF {
 			break
 		}
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "Error reading line:", err)
+			fmt.Fprintln(shell.Stderr, "Error reading line:", err)
 			break
 		}
-		if input == "" {
+
+		input.WriteString(line)
+
+		exit, err := shelly.HandleInput(input.String(), &shell)
+		if errors.Is(err, shelly.ErrIncomplete) {
 			continue
 		}
 
-		if shelly.HandleInput(input, &shell) {
+		input.Reset()
+
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			continue
+		}
+
+		if exit {
 			break
 		}
 	}
