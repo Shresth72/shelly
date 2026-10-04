@@ -6,7 +6,6 @@ import (
 
 	"github.com/chzyer/readline"
 	"github.com/codecrafters-io/shell-starter-go/internal/utils"
-	// "github.com/codecrafters-io/shell-starter-go/internal/utils"
 )
 
 type BellCompleter struct {
@@ -55,7 +54,7 @@ func (c *BellCompleter) Do(line []rune, pos int) ([][]rune, int) {
 	newLine, length := completer.Do(line, pos)
 
 	if len(newLine) == 0 {
-		fmt.Print("\a")
+		fmt.Print("\x07")
 	}
 
 	return newLine, length
