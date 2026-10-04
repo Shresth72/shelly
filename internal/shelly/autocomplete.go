@@ -2,6 +2,7 @@ package shelly
 
 import (
 	"fmt"
+	"sort"
 	"sync"
 
 	"github.com/chzyer/readline"
@@ -73,24 +74,24 @@ func (c *BellCompleter) Reset() {
 
 func buildCommandCompleter(executables []string) *readline.PrefixCompleter {
 	commands := make(map[string]struct{}, len(builtinCommands)+len(executables))
+
 	for _, command := range builtinCommands {
 		commands[command] = struct{}{}
 	}
+
 	for _, command := range executables {
 		commands[command] = struct{}{}
 	}
 
-	items := make([]readline.PrefixCompleterInterface, 0, len(commands))
+	sortedCommands := make([]string, 0, len(commands))
 	for command := range commands {
-		items = append(items, readline.PcItem(command))
+		sortedCommands = append(sortedCommands, command)
 	}
 
-	return readline.NewPrefixCompleter(items...)
-}
+	sort.Strings(sortedCommands)
 
-func buildCompleter(commands []string) *readline.PrefixCompleter {
-	items := make([]readline.PrefixCompleterInterface, 0, len(commands))
-	for _, command := range commands {
+	items := make([]readline.PrefixCompleterInterface, 0, len(sortedCommands))
+	for _, command := range sortedCommands {
 		items = append(items, readline.PcItem(command))
 	}
 
