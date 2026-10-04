@@ -13,6 +13,8 @@ type BellCompleter struct {
 
 	completer *readline.PrefixCompleter
 	ready     bool
+
+	belled bool
 }
 
 func NewAutoCompleter() *BellCompleter {
@@ -40,24 +42,33 @@ func (c *BellCompleter) setCompleter(completer *readline.PrefixCompleter) {
 }
 
 func (c *BellCompleter) Do(line []rune, pos int) ([][]rune, int) {
-	c.mu.RLock()
-	completer := c.completer
-	ready := c.ready
-	c.mu.RUnlock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 
-	if !ready {
+	if !c.belled {
+		c.belled = true
+
+		fmt.Print("\x07")
+		return nil, 0
+	}
+	c.belled = false
+
+	completer := c.completer
+
+	if !c.ready {
 		prefix := string(line[:pos])
 		executables := utils.CompleteExecutables(prefix)
 		completer = buildCommandCompleter(executables)
 	}
 
-	newLine, length := completer.Do(line, pos)
+	return completer.Do(line, pos)
+}
 
-	if len(newLine) == 0 {
-		fmt.Print("\x07")
-	}
+func (c *BellCompleter) Reset() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 
-	return newLine, length
+	c.belled = false
 }
 
 func buildCommandCompleter(executables []string) *readline.PrefixCompleter {

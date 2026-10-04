@@ -12,9 +12,10 @@ import (
 )
 
 func main() {
+	autoCompleter := shelly.NewAutoCompleter()
 	rl, err := readline.NewEx(&readline.Config{
 		Prompt:          "$ ",
-		AutoComplete:    shelly.NewAutoCompleter(),
+		AutoComplete:    autoCompleter,
 		InterruptPrompt: "^C",
 		EOFPrompt:       "exit",
 		HistoryFile:     "/tmp/shelly_history",
@@ -43,6 +44,7 @@ func main() {
 		line, err := rl.Readline()
 		if err == readline.ErrInterrupt {
 			input.Reset()
+			autoCompleter.Reset()
 			continue
 		}
 		if err == io.EOF {
@@ -61,6 +63,7 @@ func main() {
 		}
 
 		input.Reset()
+		autoCompleter.Reset()
 
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
